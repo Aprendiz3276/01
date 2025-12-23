@@ -46,7 +46,17 @@ APP parqueadero LAguarda/
 └── README.md                 # Este archivo
 ```
 
-## 🚀 Cómo usar
+## 🚀 Despliegue en Vercel
+
+Para desplegar esta aplicación en Vercel con GitHub, sigue la guía completa en [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md).
+
+### Resumen rápido:
+1. Crea un repositorio en GitHub
+2. Conecta con Vercel
+3. Configura variables de entorno
+4. ¡Listo! Tu app estará online
+
+## 🚀 Cómo usar (Desarrollo Local)
 
 ### 1. Abrir la aplicación
 - Abre `index.html` en tu navegador web
