@@ -44,12 +44,13 @@ export class Database {
 }
 
 async function initPostgreSQL() {
+    // Soportar DATABASE_URL (Supabase) o credenciales individuales
+    const connectionString = process.env.DATABASE_URL || 
+        `postgresql://${process.env.PG_USER}:${process.env.PG_PASSWORD}@${process.env.PG_HOST}:${process.env.PG_PORT}/${process.env.PG_DATABASE}`;
+    
     const pool = new pg.Pool({
-        host: process.env.PG_HOST,
-        port: process.env.PG_PORT,
-        database: process.env.PG_DATABASE,
-        user: process.env.PG_USER,
-        password: process.env.PG_PASSWORD,
+        connectionString: connectionString,
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
     });
 
     const client = await pool.connect();

@@ -9,6 +9,13 @@ router.post('/login', async (req, res) => {
         const { email, password } = req.body;
         const db = getDatabase();
 
+        if (!db) {
+            return res.status(503).json({ 
+                error: 'Base de datos no disponible',
+                message: 'El servidor está inicializando. Intenta de nuevo en unos segundos.'
+            });
+        }
+
         const users = await db.query(
             'SELECT * FROM users WHERE email = ?',
             [email]
