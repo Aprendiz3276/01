@@ -2,18 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
-import { initializeDatabase } from '../backend/database.js';
 
 dotenv.config();
 
 const app = express();
 
-// Flag para rastrear inicialización
-let dbInitialized = false;
-let initError = null;
-let initPromise = null;
-
-// Middleware
+// Middleware básico
 app.use(cors({
     origin: '*',
     credentials: true,
@@ -24,70 +18,43 @@ app.use(cors({
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
-// Health check endpoint (ANTES de inicializar rutas)
+// Health check SIMPLE (sin dependencias)
 app.get('/api/health', (req, res) => {
-    const dbTypeEnv = process.env.DB_TYPE || 'no definido';
-    const hasDatabaseUrl = !!process.env.DATABASE_URL;
-    const databaseUrlPreview = process.env.DATABASE_URL ? 
-        process.env.DATABASE_URL.substring(0, 30) + '...' : 'no definido';
-    
-    res.status(200).json({ 
-        status: dbInitialized ? 'ok' : (initError ? 'error' : 'initializing'),
-        message: 'Servidor funcionando',
-        timestamp: new Date().toISOString(),
-        environment: 'Vercel',
-        nodeEnv: process.env.NODE_ENV,
-        dbStatus: dbInitialized ? 'connected' : (initError ? 'failed' : 'connecting'),
-        error: initError ? initError.message : null,
-        debug: {
-            DB_TYPE: dbTypeEnv,
-            DATABASE_URL_configured: hasDatabaseUrl,
-            DATABASE_URL_preview: databaseUrlPreview,
-            initializationAttempted: !!initPromise
-        }
-    });
-});
-
-// Inicializar base de datos (una sola vez)
-const initDB = async () => {
-    if (dbInitialized || initError || initPromise) {
-        return;
-    }
-    
-    initPromise = (async () => {
-        try {
-            console.log('Iniciando base de datos...');
-            console.log('DB_TYPE:', process.env.DB_TYPE);
-            console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
-            
-            await initializeDatabase();
-            dbInitialized = true;
-            console.log('Base de datos inicializada correctamente');
-        } catch (error) {
-            console.error('Error inicializando base de datos:', error.message);
-            console.error('Error stack:', error.stack);
-            initError = error;
-        }
-    })();
-    
-    await initPromise;
-};
-
-// Middleware de inicialización
-app.use(async (req, res, next) => {
-    await initDB();
-    next();
-});
-
-// Cargar rutas DESPUÉS de intentar inicializar BD
-(async () => {
     try {
+        res.status(200).json({ 
+            status: 'ok',
+            message: 'Servidor funcionando',
+            timestamp: new Date().toISOString(),
+            environment: 'Vercel',
+            nodeEnv: process.env.NODE_ENV,
+            hasDbUrl: !!process.env.DATABASE_URL,
+            dbType: process.env.DB_TYPE || 'no definido'
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Inicializar BD después
+let dbInitialized = false;
+let initError = null;
+
+const initializeApp = async () => {
+    if (dbInitialized || initError) return;
+    
+    try {
+        const { initializeDatabase } = await import('../backend/database.js');
+        console.log('Inicializando base de datos...');
+        await initializeDatabase();
+        dbInitialized = true;
+        console.log('BD inicializada correctamente');
+        
+        // Ahora cargar rutas
         const authRoutes = (await import('../backend/routes/auth.js')).default;
         const parkingRoutes = (await import('../backend/routes/parking.js')).default;
         const reservationRoutes = (await import('../backend/routes/reservations.js')).default;
         const userRoutes = (await import('../backend/routes/users.js')).default;
 
-        // Rutas API
         app.use('/api/auth', authRoutes);
         app.use('/api/parking', parkingRoutes);
         app.use('/api/reservations', reservationRoutes);
@@ -95,9 +62,21 @@ app.use(async (req, res, next) => {
         
         console.log('Rutas cargadas correctamente');
     } catch (error) {
-        console.error('Error cargando rutas:', error);
+        console.error('Error en inicialización:', error.message);
+        console.error('Stack:', error.stack);
+        initError = error;
     }
-})();
+};
+
+// Middleware para inicializar en primer request
+let initialized = false;
+app.use(async (req, res, next) => {
+    if (!initialized) {
+        await initializeApp();
+        initialized = true;
+    }
+    next();
+});
 
 // Manejo de errores global
 app.use((err, req, res, next) => {
@@ -105,8 +84,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         error: true,
         message: err.message || 'Error interno del servidor',
-        status: err.status || 500,
-        timestamp: new Date().toISOString()
+        status: err.status || 500
     });
 });
 
