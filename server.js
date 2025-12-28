@@ -8,6 +8,7 @@ import authRoutes from './backend/routes/auth.js';
 import parkingRoutes from './backend/routes/parking.js';
 import reservationRoutes from './backend/routes/reservations.js';
 import userRoutes from './backend/routes/users.js';
+import { initializeDatabase } from './backend/database.js';
 
 dotenv.config();
 
@@ -72,8 +73,14 @@ app.use((req, res) => {
 
 // Solo iniciar servidor en desarrollo local
 if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
-    app.listen(PORT, () => {
-        console.log(`✅ Servidor ejecutándose en http://localhost:${PORT}`);
+    initializeDatabase().then(() => {
+        app.listen(PORT, () => {
+            console.log(`✅ Servidor ejecutándose en http://localhost:${PORT}`);
+            console.log(`✅ Base de datos inicializada`);
+        });
+    }).catch((err) => {
+        console.error('❌ Error al inicializar base de datos:', err);
+        process.exit(1);
     });
 }
 
