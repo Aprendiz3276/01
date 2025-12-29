@@ -23,7 +23,7 @@ router.post('/', async (req, res) => {
 
         await db.run(
             `INSERT INTO parking_lots (name, location, total_spaces, available_spaces, price_per_hour) 
-             VALUES (?, ?, ?, ?, ?)`,
+             VALUES ($1, $2, $3, $4, $5)`,
             [name, location, totalSpaces, totalSpaces, pricePerHour]
         );
 
@@ -42,8 +42,8 @@ router.put('/:id', async (req, res) => {
         const db = getDatabase();
 
         await db.run(
-            `UPDATE parking_lots SET name = ?, location = ?, total_spaces = ?, available_spaces = ?, price_per_hour = ? 
-             WHERE id = ?`,
+            `UPDATE parking_lots SET name = $1, location = $2, total_spaces = $3, available_spaces = $4, price_per_hour = $5 
+             WHERE id = $6`,
             [name, location, totalSpaces, availableSpaces, pricePerHour, id]
         );
 

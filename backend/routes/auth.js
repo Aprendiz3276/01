@@ -17,7 +17,7 @@ router.post('/login', async (req, res) => {
         }
 
         const users = await db.query(
-            'SELECT * FROM users WHERE email = ?',
+            'SELECT * FROM users WHERE email = $1',
             [email]
         );
 
@@ -56,7 +56,7 @@ router.post('/register', async (req, res) => {
         }
 
         await db.run(
-            'INSERT INTO users (email, password, name, role) VALUES (?, ?, ?, ?)',
+            'INSERT INTO users (email, password, name, role) VALUES ($1, $2, $3, $4)',
             [email, password, name, 'user']
         );
 

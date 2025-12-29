@@ -10,7 +10,7 @@ router.get('/:id', async (req, res) => {
         const db = getDatabase();
 
         const users = await db.query(
-            'SELECT id, email, name, role FROM users WHERE id = ?',
+            'SELECT id, email, name, role FROM users WHERE id = $1',
             [id]
         );
 
@@ -32,7 +32,7 @@ router.get('/:userId/vehicles', async (req, res) => {
         const db = getDatabase();
 
         const vehicles = await db.query(
-            'SELECT * FROM vehicles WHERE user_id = ?',
+            'SELECT * FROM vehicles WHERE user_id = $1',
             [userId]
         );
 
@@ -51,7 +51,7 @@ router.post('/:userId/vehicles', async (req, res) => {
         const db = getDatabase();
 
         await db.run(
-            'INSERT INTO vehicles (user_id, plate, model) VALUES (?, ?, ?)',
+            'INSERT INTO vehicles (user_id, plate, model) VALUES ($1, $2, $3)',
             [userId, plate, model]
         );
 
@@ -70,7 +70,7 @@ router.put('/:id', async (req, res) => {
         const db = getDatabase();
 
         await db.run(
-            'UPDATE users SET name = ?, email = ? WHERE id = ?',
+            'UPDATE users SET name = $1, email = $2 WHERE id = $3',
             [name, email, id]
         );
 

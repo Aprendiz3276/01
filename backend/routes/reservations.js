@@ -14,7 +14,7 @@ router.get('/user/:userId', async (req, res) => {
              FROM reservations r
              JOIN parking_lots pl ON r.parking_lot_id = pl.id
              JOIN vehicles v ON r.vehicle_id = v.id
-             WHERE r.user_id = ?
+             WHERE r.user_id = $1
              ORDER BY r.created_at DESC`,
             [userId]
         );
@@ -34,7 +34,7 @@ router.post('/', async (req, res) => {
 
         // Calcular costo
         const parkingLots = await db.query(
-            'SELECT price_per_hour FROM parking_lots WHERE id = ?',
+            'SELECT price_per_hour FROM parking_lots WHERE id = $1',
             [parkingLotId]
         );
 
@@ -48,13 +48,13 @@ router.post('/', async (req, res) => {
 
         await db.run(
             `INSERT INTO reservations (user_id, parking_lot_id, vehicle_id, start_time, end_time, total_cost, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
             [userId, parkingLotId, vehicleId, startTime, endTime, totalCost, 'active']
         );
 
         // Actualizar espacios disponibles
         await db.run(
-            'UPDATE parking_lots SET available_spaces = available_spaces - 1 WHERE id = ?',
+            'UPDATE parking_lots SET available_spaces = available_spaces - 1 WHERE id = $1',
             [parkingLotId]
         );
 
@@ -72,7 +72,7 @@ router.put('/:id/cancel', async (req, res) => {
         const db = getDatabase();
 
         const reservations = await db.query(
-            'SELECT parking_lot_id FROM reservations WHERE id = ?',
+            'SELECT parking_lot_id FROM reservations WHERE id = $1',
             [id]
         );
 
@@ -81,13 +81,13 @@ router.put('/:id/cancel', async (req, res) => {
         }
 
         await db.run(
-            'UPDATE reservations SET status = ? WHERE id = ?',
+            'UPDATE reservations SET status = $1 WHERE id = $2',
             ['cancelled', id]
         );
 
         // Liberar espacio
         await db.run(
-            'UPDATE parking_lots SET available_spaces = available_spaces + 1 WHERE id = ?',
+            'UPDATE parking_lots SET available_spaces = available_spaces + 1 WHERE id = $1',
             [reservations[0].parking_lot_id]
         );
 

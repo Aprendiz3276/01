@@ -1,3 +1,18 @@
 {
-  "version": 2
+  "version": 2,
+  "buildCommand": "npm run setup-db || true",
+  "env": {
+    "DB_TYPE": "postgresql",
+    "NODE_ENV": "production"
+  },
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
 }
