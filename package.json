@@ -2,7 +2,7 @@
   "name": "miparqueo-app",
   "version": "1.0.0",
   "description": "Sistema de gestión de parqueaderos con PostgreSQL/SQLite",
-  "main": "server.js",
+  "main": "api/index.js",
   "type": "module",
   "scripts": {
     "start": "node server.js",
